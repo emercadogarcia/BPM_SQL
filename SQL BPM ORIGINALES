@@ -1,0 +1,78 @@
+****** CODIGO SQL DE BPM ORIGINALES *********
+****** TAREA 010 EJECUCION ********
+declare
+v_monto number:=10000;
+v_01 number:=2000;
+v_02 number:=20000;
+v_03 number;
+
+begin
+select SUM(IMPORTE_LIN_NETO_DIV) into v_monto from pedidos_compras_lin where codigo_empresa = :global.codigo_empresa and organizacion_compras = :tareas_menu.c_itema079 and numero_pedido = :tareas_menu.c_itema077;
+/*
+select  valor_n into v_02 from suco_parametros_empresa where empresa= :global.codigo_empresa 
+    and c_contable= substr(:tareas_menu.c_itema079,1,4) and parametro = 'LCOMPRAS2';
+*/
+if v_monto >= v_02 then
+update crmexpedientes_cab set itemn001 = v_monto where empresa = :global.codigo_empresa and numero_expediente = :p_numero_expediente;
+update pedidos_compras  set reservado_number1 = 3 where codigo_empresa = :global.codigo_empresa and organizacion_compras = :tareas_menu.c_itema079 and numero_pedido = :tareas_menu.c_itema077;
+update crmexpedientes_cab set itemn001 = v_monto , itemn002= 3 where empresa = :global.codigo_empresa and numero_expediente = :p_numero_expediente;
+
+else
+/*
+select  valor_n into v_01 from suco_parametros_empresa where empresa= :global.codigo_empresa 
+    and c_contable= substr(:tareas_menu.c_itema079,1,4) and parametro = 'LCOMPRAS1';
+*/
+if v_monto >= v_01 then
+update crmexpedientes_cab set itemn001 = v_monto where empresa = :global.codigo_empresa and numero_expediente = :p_numero_expediente;
+update pedidos_compras  set reservado_number1 = 5 where codigo_empresa = :global.codigo_empresa and organizacion_compras = :tareas_menu.c_itema079 and numero_pedido = :tareas_menu.c_itema077;
+update crmexpedientes_cab set itemn001 = v_monto , itemn002= 2 where empresa = :global.codigo_empresa and numero_expediente = :p_numero_expediente;
+else
+update crmexpedientes_cab set itemn001 = v_monto where empresa = :global.codigo_empresa and numero_expediente = :p_numero_expediente;
+update pedidos_compras  set reservado_number1 = 1 where codigo_empresa = :global.codigo_empresa and organizacion_compras = :tareas_menu.c_itema079 and numero_pedido = :tareas_menu.c_itema077;
+update crmexpedientes_cab set itemn001 = v_monto , itemn002= 1 where empresa = :global.codigo_empresa and numero_expediente = :p_numero_expediente;
+
+
+end if;
+end if;
+
+
+commit;
+end;
+************* FIN 010 EJECUCION *******
+
+******** TAREA 055 EJECUCION *******
+declare
+Flag varchar2(30);
+d_org_compras varchar2(200);
+v_org_compras varchar2(6);
+V_RTN VARCHAR2(5);
+begin
+v_org_compras:=:tareas_menu.c_itema079;
+SELECT o.nombre into d_org_compras FROM organizacion_compras o WHERE o.codigo_org_compras = :tareas_menu.c_itema079 AND o.codigo_empresa = '004';
+flag:=substr(d_org_compras,length(d_org_compras)-12,13);
+if flag='NO MERCADERIA' then 
+       UPDATE crmexpedientes_lin SET status_tarea='50G'
+       		WHERE numero_expediente = :tareas_menu.numero_expediente  /*:p_numero_expediente*/
+	         AND empresa = :global.codigo_empresa
+	         and codigo_secuencia='055' and numero_linea = (select max(numero_linea) from crmexpedientes_lin
+     		WHERE numero_expediente = :tareas_menu.numero_expediente
+       		AND empresa = :global.codigo_empresa and codigo_secuencia='055');
+
+	V_RTN := pkcrmexpedientes_tareas.asignar_tarea_at(:global.codigo_empresa, :p_numero_expediente, :p_numero_linea, :global.usuario, null, '405304');
+ELSE 
+   UPDATE crmexpedientes_lin SET status_tarea='50F'
+       		WHERE numero_expediente = :tareas_menu.numero_expediente  /*:p_numero_expediente*/
+	         AND empresa = :global.codigo_empresa
+	         and codigo_secuencia='055' and numero_linea = (select max(numero_linea) from crmexpedientes_lin
+     		WHERE numero_expediente = :tareas_menu.numero_expediente
+       		AND empresa = :global.codigo_empresa and codigo_secuencia='055');
+	/*V_RTN := pkcrmexpedientes_tareas.asignar_tarea_at(:global.codigo_empresa, :p_numero_expediente, :p_numero_linea, :global.usuario, null, '405309');*/
+
+end if;
+
+
+EXCEPTION
+    WHEN NO_DATA_FOUND THEN
+      NULL;
+END;
+********* FIN 055 EJECUCION  ***********
